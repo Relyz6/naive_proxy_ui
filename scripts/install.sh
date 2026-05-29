@@ -442,7 +442,7 @@ cat >> /etc/caddy/Caddyfile <<EOF
     tls ${EMAIL}
 
     forward_proxy {
-        import /etc/caddy/users/*
+        import /etc/caddy/users/*.conf
         hide_ip
         hide_via
         probe_resistance
