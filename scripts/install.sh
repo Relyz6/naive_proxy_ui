@@ -442,6 +442,7 @@ cat >> /etc/caddy/Caddyfile <<EOF
     tls ${EMAIL}
 
     forward_proxy {
+        basic_auth dummy_user_do_not_delete 1234567890qwertyuiopasdfghjkl
         import /etc/caddy/users/*.conf
         hide_ip
         hide_via
