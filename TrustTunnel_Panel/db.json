@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "serverHost": "yourserver.com",
+    "serverPort": 8443,
+    "vpnTomlPath": "/opt/trusttunnel/vpn.toml",
+    "credentialsTomlPath": "./credentials.toml",
+    "restartCommand": "sudo systemctl restart trusttunnel",
+    "customSni": "",
+    "skipVerification": false,
+    "dnsUpstreams": ["1.1.1.1", "8.8.8.8"]
+  },
+  "users": []
+}

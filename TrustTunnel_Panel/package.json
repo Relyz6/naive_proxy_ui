@@ -1,0 +1,16 @@
+{
+  "name": "trusttunnel-panel",
+  "version": "1.0.0",
+  "description": "Modern Web Panel and REST API to manage TrustTunnel obfuscated VPN",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ssh2": "^1.17.0"
+  },
+  "author": "Antigravity",
+  "license": "MIT"
+}

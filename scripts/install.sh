@@ -397,10 +397,9 @@ WantedBy=multi-user.target
 EOF
 
   systemctl daemon-reload
-
-  systemctl enable naiveproxy-backend
-
-  systemctl restart naiveproxy-backend
+  systemctl enable --now caddy
+  systemctl enable --now naiveproxy-backend
+  systemctl enable --now trusttunnel || true
 
   log "Backend systemd service created"
 }
@@ -486,6 +485,32 @@ EOF
   systemctl daemon-reload
 }
 
+install_trusttunnel() {
+  log "Installing TrustTunnel"
+  curl -fsSL https://raw.githubusercontent.com/TrustTunnel/TrustTunnel/refs/heads/master/scripts/install.sh | sh -s -- -a y || true
+  
+  if [ -d /opt/trusttunnel ]; then
+    cd /opt/trusttunnel && rm -f vpn.toml hosts.toml credentials.toml rules.toml || true
+    
+    ./setup_wizard -m non-interactive -a 0.0.0.0:8443 -c admin:adminpass -n $DOMAIN --cert-type self-signed --lib-settings vpn.toml --hosts-settings hosts.toml || true
+    
+    cat <<EOF > /etc/systemd/system/trusttunnel.service
+[Unit]
+Description=TrustTunnel Endpoint Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/trusttunnel
+ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  fi
+}
 
 start_services() {
 
@@ -530,6 +555,8 @@ main() {
   create_backend_service
   create_caddyfile
   create_caddy_service
+  
+  install_trusttunnel
 
   start_services
 

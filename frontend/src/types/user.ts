@@ -4,6 +4,7 @@ export type User = {
   login: string;
   password?: string;
   link?: string;
+  tt_link?: string;
   desktop?: string;
   enabled: boolean;
 };

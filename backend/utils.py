@@ -3,8 +3,10 @@ import secrets
 import string
 import subprocess
 from pathlib import Path
+from urllib.parse import quote
 
 from config import config
+from trusttunnel import generate_tt_link, sync_tt_credentials
 
 USERS_DIR = Path("/etc/caddy/users")
 CADDY_CONFIG = "/etc/caddy/Caddyfile"
@@ -14,10 +16,13 @@ def enrich_user(user: dict) -> dict:
     login = user["login"]
     password = user["password"]
 
+    # Generate TT link
+    tt_link = generate_tt_link(login, password)
+
     return {
         **user,
-        "link": (f"naive+https://{login}:{password}@{config.DOMAIN}:443"),
-        "desktop": (f"https://{login}:{password}@{config.DOMAIN}"),
+        "link": f"naive+https://{quote(login)}:{quote(password)}@{config.DOMAIN}",
+        "tt_link": tt_link,
     }
 
 
@@ -128,6 +133,11 @@ def parse_users():
     return users
 
 
+def write_caddyfile(users):
+    sync_tt_credentials(users)
+    subprocess.run(["systemctl", "reload", "caddy"], check=False)
+
+
 def validate_caddy() -> bool:
     result = subprocess.run(
         [
@@ -144,6 +154,7 @@ def validate_caddy() -> bool:
 
 
 def reload_caddy() -> bool:
+    sync_tt_credentials(parse_users())
     result = subprocess.run(
         [
             "caddy",

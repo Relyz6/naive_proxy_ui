@@ -173,6 +173,7 @@ def get_user_link(user_id: str, _: str = Depends(check_auth)):
             return {
                 "status": "ok",
                 "link": enriched["link"],
+                "tt_link": enriched["tt_link"]
             }
 
     raise HTTPException(status_code=404, detail="User not found")

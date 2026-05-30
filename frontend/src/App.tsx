@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 
 import { userService } from "./api/userService";
@@ -23,7 +24,8 @@ import {
   Hash,
   RefreshCw,
   Settings,
-  X
+  X,
+  QrCode
 } from "lucide-react";
 
 type Lang = "ru" | "eu";
@@ -132,6 +134,8 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [linkProtocol, setLinkProtocol] = useState<"naive" | "tt">("naive");
+  const [qrCodeLink, setQrCodeLink] = useState<string | null>(null);
 
   const { toasts, push } = useToast();
 
@@ -208,10 +212,16 @@ export default function App() {
     }
   };
 
-  const copy = async (id: string) => {
+  const copy = async (id: string, directLink?: string) => {
     try {
-      const link = await userService.getUserLink(id);
-      navigator.clipboard.writeText(link);
+      if (directLink) {
+        navigator.clipboard.writeText(directLink);
+        push(t.copied, "success");
+        return;
+      }
+      const data = await userService.getUserLink(id) as any;
+      const targetLink = linkProtocol === 'tt' ? (data.tt_link || data.link) : data.link;
+      navigator.clipboard.writeText(targetLink);
       push(t.copied, "success");
     } catch {
       push("Failed to fetch link", "error");
@@ -432,6 +442,20 @@ export default function App() {
                 </div>
                 <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
                   <button 
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${linkProtocol === 'naive' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    onClick={() => setLinkProtocol('naive')}
+                  >
+                    NaiveProxy
+                  </button>
+                  <button 
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${linkProtocol === 'tt' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    onClick={() => setLinkProtocol('tt')}
+                  >
+                    TrustTunnel
+                  </button>
+                </div>
+                <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                  <button 
                     className={`p-2 rounded-md transition-colors ${sortType === 'id' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
                     onClick={() => setSortType('id')}
                     title={t.sortId}
@@ -483,7 +507,7 @@ export default function App() {
 
                     <div className="flex items-center gap-2 w-full lg:w-auto overflow-hidden">
                       <div className="text-sm font-mono text-slate-500 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 truncate max-w-[200px] xl:max-w-md">
-                        {visibleLinks[u.id] ? u.link : maskLink(u.link)}
+                        {visibleLinks[u.id] ? (linkProtocol === 'tt' ? (u.tt_link || u.link) : u.link) : maskLink(linkProtocol === 'tt' ? (u.tt_link || u.link) : u.link)}
                       </div>
                       <button className="btn ghost p-2" onClick={() => toggleLink(u.id)} title="Toggle Visibility">
                         {visibleLinks[u.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -491,8 +515,11 @@ export default function App() {
                     </div>
 
                     <div className="flex items-center gap-2 w-full lg:w-auto">
-                      <button className="btn ghost p-2" onClick={() => copy(u.id)} title={t.copy}>
+                      <button className="btn ghost p-2" onClick={() => copy(u.id, linkProtocol === 'tt' ? (u.tt_link || u.link || '') : (u.link || ''))} title={t.copy}>
                         <Copy className="w-4 h-4" />
+                      </button>
+                      <button className="btn ghost p-2" onClick={() => setQrCodeLink(linkProtocol === 'tt' ? (u.tt_link || u.link || '') : (u.link || ''))} title="QR Code">
+                        <QrCode className="w-4 h-4" />
                       </button>
 
                       <button 
@@ -516,6 +543,29 @@ export default function App() {
 
         </div>
       </main>
+
+      {/* QR Code Modal */}
+      {qrCodeLink && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl animate-fade-in flex flex-col items-center gap-6">
+            <div className="flex w-full justify-between items-center mb-2">
+              <h3 className="text-xl font-semibold text-white">QR Code</h3>
+              <button
+                onClick={() => setQrCodeLink(null)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="bg-white p-4 rounded-xl">
+              <QRCodeSVG value={qrCodeLink} size={256} />
+            </div>
+            <div className="text-sm text-slate-400 font-mono break-all max-w-sm text-center">
+              {qrCodeLink}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Modal */}
       {isSettingsOpen && (

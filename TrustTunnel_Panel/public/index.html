@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustTunnel Control Panel</title>
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons (CDN) for sleek, premium icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Client-side QR Code library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+  
+  <div class="app-container">
+    <!-- Header -->
+    <header class="main-header glass-element">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <i data-lucide="shield-check" class="icon-glow"></i>
+        </div>
+        <div class="logo-text">
+          <h1>TrustTunnel</h1>
+          <span>Control Panel & API</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-settings" class="btn btn-secondary btn-icon-text">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </button>
+        <button id="btn-create-user" class="btn btn-primary btn-icon-text">
+          <i data-lucide="user-plus"></i>
+          <span>New User</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Stats Dashboard Grid -->
+    <section class="stats-grid">
+      <!-- Stat 1: Service Status -->
+      <div class="stat-card glass-element">
+        <div class="stat-icon-wrapper status-online" id="status-glow">
+          <i data-lucide="activity" class="stat-icon"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Service Status</h3>
+          <p id="system-status">Checking...</p>
+          <span class="stat-subtext" id="system-status-sub">Detecting service state...</span>
+        </div>
+      </div>
+      
+      <!-- Stat 2: Active Users -->
+      <div class="stat-card glass-element">
+        <div class="stat-icon-wrapper accent-violet">
+          <i data-lucide="users" class="stat-icon"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Active Users</h3>
+          <p id="stat-active-count">0</p>
+          <span class="stat-subtext" id="stat-total-count">0 total configured</span>
+        </div>
+      </div>
+
+      <!-- Stat 3: Server Endpoint -->
+      <div class="stat-card glass-element">
+        <div class="stat-icon-wrapper accent-teal">
+          <i data-lucide="server" class="stat-icon"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Server Endpoint</h3>
+          <p id="stat-server-endpoint">...</p>
+          <span class="stat-subtext" id="stat-server-port">Port: ...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content & Filters -->
+    <main class="content-section">
+      <div class="filter-bar glass-element">
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input type="text" id="search-input" placeholder="Search by username or notes...">
+        </div>
+        <div class="filter-options">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="active">Enabled</button>
+          <button class="filter-tab" data-filter="disabled">Disabled</button>
+        </div>
+      </div>
+
+      <!-- User List Grid -->
+      <div class="users-grid-container">
+        <div id="users-loading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Fetching secure tunnels...</p>
+        </div>
+        
+        <div id="users-empty" class="empty-state hidden">
+          <i data-lucide="user-x"></i>
+          <h3>No tunnels found</h3>
+          <p>Create your first TrustTunnel user to get started.</p>
+        </div>
+
+        <div id="users-grid" class="users-grid">
+          <!-- Dynamically populated card elements -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <p>TrustTunnel Panel • Premium Oblivious Transport VPN Panel • Designed by Antigravity</p>
+    </footer>
+  </div>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- Modal 1: Create User -->
+  <div id="modal-create" class="modal-overlay">
+    <div class="modal-card glass-element animate-slide-up">
+      <div class="modal-header">
+        <h2><i data-lucide="user-plus"></i> Create Secure Tunnel</h2>
+        <button class="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-create-user">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="create-username">Username</label>
+            <input type="text" id="create-username" placeholder="e.g. client_alex" required autocomplete="off">
+            <span class="input-hint">Unique identifier for the VPN client connection.</span>
+          </div>
+          <div class="form-group">
+            <label for="create-password">Password</label>
+            <div class="input-action-group">
+              <input type="text" id="create-password" placeholder="Leave empty for secure auto-generation" autocomplete="off">
+              <button type="button" id="btn-generate-pass" class="btn btn-secondary btn-small" title="Generate Secure Password">
+                <i data-lucide="key"></i>
+              </button>
+            </div>
+            <span class="input-hint">Will be auto-generated with cryptographically secure characters if blank.</span>
+          </div>
+          <div class="form-group">
+            <label for="create-notes">Notes / Device Description</label>
+            <input type="text" id="create-notes" placeholder="e.g. Alex's iPhone 15 Pro Max" autocomplete="off">
+            <span class="input-hint">Optional notes or tags for identifying this tunnel.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Tunnel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: User Connection Details -->
+  <div id="modal-details" class="modal-overlay">
+    <div class="modal-card glass-element modal-large animate-slide-up">
+      <div class="modal-header">
+        <h2><i data-lucide="key-round"></i> Tunnel Credentials</h2>
+        <button class="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="details-layout">
+          <!-- Left Panel: QR Code and Direct Actions -->
+          <div class="details-sidebar">
+            <div class="qr-container">
+              <div id="details-qrcode"></div>
+              <span class="qr-label">Scan with TrustTunnel App</span>
+            </div>
+            <div class="sidebar-actions">
+              <a href="#" id="btn-download-toml" class="btn btn-primary btn-full btn-icon-text">
+                <i data-lucide="download"></i>
+                <span>Download Client TOML</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Right Panel: Connection info and manual inputs -->
+          <div class="details-main">
+            <h3 id="details-username-title" class="user-title">Username</h3>
+            
+            <div class="credentials-group">
+              <div class="cred-row">
+                <span class="cred-label">Server / Host</span>
+                <div class="cred-field">
+                  <span id="cred-host">...</span>
+                  <button class="btn-copy" data-copy-target="cred-host"><i data-lucide="copy"></i></button>
+                </div>
+              </div>
+              
+              <div class="cred-row">
+                <span class="cred-label">Port</span>
+                <div class="cred-field">
+                  <span id="cred-port">...</span>
+                  <button class="btn-copy" data-copy-target="cred-port"><i data-lucide="copy"></i></button>
+                </div>
+              </div>
+
+              <div class="cred-row">
+                <span class="cred-label">Username</span>
+                <div class="cred-field">
+                  <span id="cred-username">...</span>
+                  <button class="btn-copy" data-copy-target="cred-username"><i data-lucide="copy"></i></button>
+                </div>
+              </div>
+
+              <div class="cred-row">
+                <span class="cred-label">Password</span>
+                <div class="cred-field">
+                  <span id="cred-password" class="password-hidden">...</span>
+                  <button class="btn-copy" data-copy-target="cred-password"><i data-lucide="copy"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom URI / Deeplink -->
+            <div class="form-group uri-section">
+              <label>TrustTunnel Connection String (tt://)</label>
+              <div class="input-action-group">
+                <input type="text" id="cred-deeplink" readonly>
+                <button class="btn btn-secondary btn-small btn-copy" data-copy-target="cred-deeplink" title="Copy Deep Link">
+                  <i data-lucide="copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Settings -->
+  <div id="modal-settings" class="modal-overlay">
+    <div class="modal-card glass-element modal-large animate-slide-up">
+      <div class="modal-header">
+        <h2><i data-lucide="sliders"></i> Server Configurations</h2>
+        <button class="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-settings">
+        <div class="modal-body">
+          <div class="settings-grid">
+            <div class="settings-column">
+              <h3>Endpoint Connectivity</h3>
+              <div class="form-group">
+                <label for="settings-host">Public Domain / IP Address</label>
+                <input type="text" id="settings-host" placeholder="e.g. server.trusttunnel.org" required>
+                <span class="input-hint">Clients will use this host to connect to the VPN.</span>
+              </div>
+              <div class="form-group">
+                <label for="settings-port">TrustTunnel Listen Port</label>
+                <input type="number" id="settings-port" placeholder="e.g. 8443" required>
+                <span class="input-hint">We recommend port 8443 to avoid port collisions with NaiveProxy.</span>
+              </div>
+              <div class="form-group">
+                <label for="settings-sni">Custom SNI (Server Name Indication)</label>
+                <input type="text" id="settings-sni" placeholder="e.g. google.com (Optional)">
+                <span class="input-hint">Obfuscation SNI to mimic standard web traffic hostnames.</span>
+              </div>
+            </div>
+
+            <div class="settings-column">
+              <h3>Service Integration</h3>
+              <div class="form-group">
+                <label for="settings-creds-path">Credentials TOML File Path</label>
+                <input type="text" id="settings-creds-path" placeholder="e.g. /etc/trusttunnel/credentials.toml" required>
+                <span class="input-hint">Absolute server path where the credentials list will be synchronized.</span>
+              </div>
+              <div class="form-group">
+                <label for="settings-restart-cmd">Service Restart Command</label>
+                <input type="text" id="settings-restart-cmd" placeholder="e.g. sudo systemctl restart trusttunnel">
+                <span class="input-hint">Executes automatically on user additions/toggles to reload credentials.</span>
+              </div>
+              <div class="form-group">
+                <label>DNS Upstreams (comma separated)</label>
+                <input type="text" id="settings-dns" placeholder="e.g. 1.1.1.1, 8.8.8.8">
+                <span class="input-hint">DNS resolvers assigned to active VPN tunnel clients.</span>
+              </div>
+              <div class="form-group checkbox-group">
+                <input type="checkbox" id="settings-skip-verify">
+                <label for="settings-skip-verify" class="label-inline">Skip Server TLS Verification</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnostics Console -->
+          <div class="console-box">
+            <div class="console-header">
+              <span>Integration Diagnostics Logs</span>
+              <button type="button" id="btn-test-restart" class="btn btn-secondary btn-mini btn-icon-text">
+                <i data-lucide="refresh-cw"></i>
+                <span>Test Service Restart</span>
+              </button>
+            </div>
+            <pre id="console-logs">Console Idle. Launch command to test integration.</pre>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Configs</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Core App Controller -->
+  <script src="app.js"></script>
+</body>
+</html>

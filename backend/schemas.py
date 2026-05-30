@@ -19,7 +19,7 @@ class UserBase(BaseModel):
 
 class UserEnriched(UserBase):
     link: str
-    desktop: str
+    tt_link: str
 
 class UserListResponse(BaseModel):
     count: int
@@ -45,6 +45,7 @@ class DeleteUserResponse(BaseModel):
 class LinkResponse(BaseModel):
     status: str
     link: str
+    tt_link: str
 
 class SystemStatusResponse(BaseModel):
     caddy_running: bool
