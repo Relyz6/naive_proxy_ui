@@ -235,11 +235,9 @@ export default function App() {
     setVisibleLinks((p) => ({ ...p, [id]: !p[id] }));
   };
 
-  const maskLink = (link?: string) => {
+  const maskLink = (link?: string, protocol?: string) => {
     if (!link) return "";
-    if (link.startsWith("tt://")) {
-      return "tt://?***";
-    }
+    if (protocol === 'tt') return "tt://***";
     try {
       const cleaned = link.replace("naive+", "");
       const url = new URL(cleaned);
@@ -248,7 +246,7 @@ export default function App() {
       if (hostParts.length >= 2) {
         maskedHost = `${hostParts[0]}.***`;
       }
-      return `naive+${url.protocol}//***@${maskedHost}${url.port ? `:${url.port}` : ""}`;
+      return `naive+https://***@${maskedHost}${url.port ? `:${url.port}` : ""}`;
     } catch {
       return "hidden";
     }
@@ -524,7 +522,7 @@ export default function App() {
 
                     <div className="flex items-center gap-2 w-full lg:w-auto overflow-hidden">
                       <div className="text-sm font-mono text-slate-500 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 truncate max-w-[200px] xl:max-w-md">
-                        {visibleLinks[u.id] ? (linkProtocol === 'tt' ? (u.tt_link || u.link) : u.link) : maskLink(linkProtocol === 'tt' ? (u.tt_link || u.link) : u.link)}
+                        {visibleLinks[u.id] ? (linkProtocol === 'tt' ? (u.tt_link || u.link) : u.link) : maskLink(linkProtocol === 'tt' ? (u.tt_link || u.link) : u.link, linkProtocol)}
                       </div>
                       <button className="btn ghost p-2" onClick={() => toggleLink(u.id)} title="Toggle Visibility">
                         {visibleLinks[u.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
