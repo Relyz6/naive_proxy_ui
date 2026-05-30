@@ -136,6 +136,9 @@ export default function App() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [linkProtocol, setLinkProtocol] = useState<"naive" | "tt">("naive");
   const [qrCodeLink, setQrCodeLink] = useState<string | null>(null);
+  
+  const [updateLogs, setUpdateLogs] = useState<string[]>([]);
+  const [isUpdateTerminalOpen, setIsUpdateTerminalOpen] = useState(false);
 
   const { toasts, push } = useToast();
 
@@ -248,18 +251,29 @@ export default function App() {
     }
   };
 
-  const handleUpdate = async () => {
-    try {
-      setIsUpdating(true);
-      await userService.updateSystem();
-      push(t.updateStarted, "success");
-      setTimeout(() => {
-        window.location.reload();
-      }, 15000);
-    } catch {
-      push(t.error, "error");
-      setIsUpdating(false);
-    }
+  const handleUpdate = () => {
+    setIsUpdateTerminalOpen(true);
+    setIsUpdating(true);
+    setUpdateLogs(["Initiating update connection..."]);
+    
+    const token = localStorage.getItem('admin_password') || '';
+    const source = new EventSource(`/api/system/update/stream?token=${encodeURIComponent(token)}`);
+    
+    source.onmessage = (event) => {
+      if (event.data === '[DONE]') {
+        source.close();
+        setUpdateLogs(prev => [...prev, "--- Update Finished! Page will reload in 5 seconds... ---"]);
+        setTimeout(() => window.location.reload(), 5000);
+      } else {
+        setUpdateLogs(prev => [...prev, event.data]);
+      }
+    };
+
+    source.onerror = () => {
+      source.close();
+      setUpdateLogs(prev => [...prev, "\nConnection lost (Backend is restarting). Page will reload in 5 seconds..."]);
+      setTimeout(() => window.location.reload(), 5000);
+    };
   };
 
   const handleChangePassword = async () => {
@@ -562,6 +576,26 @@ export default function App() {
             </div>
             <div className="text-sm text-slate-400 font-mono break-all max-w-sm text-center">
               {qrCodeLink}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Terminal Modal */}
+      {isUpdateTerminalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-[#0c0c0c] border border-slate-700 rounded-xl w-full max-w-4xl shadow-2xl flex flex-col overflow-hidden h-[70vh]">
+            <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <RefreshCw className={`w-5 h-5 text-indigo-400 ${isUpdating ? 'animate-spin' : ''}`} />
+                <h3 className="text-lg font-semibold text-slate-200 font-mono">System Update Terminal</h3>
+              </div>
+            </div>
+            <div className="p-4 bg-[#0c0c0c] flex-1 overflow-y-auto font-mono text-sm text-green-400 flex flex-col gap-1">
+              {updateLogs.map((log, idx) => (
+                <div key={idx} className="break-all whitespace-pre-wrap">{log}</div>
+              ))}
+              {isUpdating && <div className="animate-pulse text-slate-500 mt-2">_</div>}
             </div>
           </div>
         </div>

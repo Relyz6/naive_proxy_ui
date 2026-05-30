@@ -6,6 +6,7 @@ from fastapi import (
     Query,
     Body
 )
+from fastapi.responses import StreamingResponse
 from security import check_auth
 from schemas import (
     UserListResponse,
@@ -309,6 +310,29 @@ def system_update(_: str = Depends(check_auth)):
     thread.start()
     
     return {"status": "ok", "message": "Update started, panel will reload shortly"}
+
+@router.get("/system/update/stream", summary="Live update terminal", tags=["System"])
+def system_update_stream(_: str = Depends(check_auth)):
+    script_path = Path(__file__).parent.parent / "scripts" / "update.sh"
+    
+    if not script_path.exists():
+        raise HTTPException(status_code=404, detail="Update script not found")
+        
+    def generate():
+        process = subprocess.Popen(
+            ["/bin/bash", str(script_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        for line in iter(process.stdout.readline, ''):
+            yield f"data: {line}\n\n"
+        process.stdout.close()
+        process.wait()
+        yield f"data: [DONE]\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 @router.post("/system/password", response_model=GenericResponse, summary="Change admin password", tags=["System"])
 def change_admin_password(request: ChangePasswordRequest, _: str = Depends(check_auth)):
