@@ -507,7 +507,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/trusttunnel
-ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml /opt/trusttunnel/credentials.toml
+ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml
 Restart=always
 RestartSec=5
 
