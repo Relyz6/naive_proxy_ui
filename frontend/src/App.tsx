@@ -225,6 +225,20 @@ export default function App() {
     }
   };
 
+  const handleUpdate = async () => {
+    try {
+      setIsUpdating(true);
+      await userService.updateSystem();
+      push(t.updateStarted, "success");
+      setTimeout(() => {
+        window.location.reload();
+      }, 15000);
+    } catch {
+      push(t.error, "error");
+      setIsUpdating(false);
+    }
+  };
+
   const processedUsers = useMemo(() => {
     let result = [...users];
 
