@@ -8,7 +8,8 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 echo "🔄 Обновление NaiveProxy Panel..."
 
 cd "$PROJECT_ROOT"
-git pull || echo "⚠️ Не удалось выполнить git pull (возможно, вы копировали файлы вручную)"
+git fetch --all
+git reset --hard origin/main
 
 echo "📦 Сборка Frontend..."
 cd "$PROJECT_ROOT/frontend"
