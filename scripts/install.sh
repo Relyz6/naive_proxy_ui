@@ -508,6 +508,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/opt/trusttunnel
 ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5
 
