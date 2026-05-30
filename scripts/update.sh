@@ -19,7 +19,7 @@ rm -rf /var/www/react/*
 cp -r dist/* /var/www/react/
 chmod -R 755 /var/www/react
 
-echo "🛡️ Проверка установки TrustTunnel..."
+echo "🛡️ Проверка и настройка TrustTunnel..."
 if [ ! -d /opt/trusttunnel ]; then
   echo "Устанавливаем TrustTunnel..."
   curl -fsSL https://raw.githubusercontent.com/TrustTunnel/TrustTunnel/refs/heads/master/scripts/install.sh | sh -s -- -a y || true
@@ -27,14 +27,17 @@ if [ ! -d /opt/trusttunnel ]; then
   if [ -d /opt/trusttunnel ]; then
     cd /opt/trusttunnel && rm -f vpn.toml hosts.toml credentials.toml rules.toml || true
     
-    # Пытаемся получить DOMAIN из .env
     DOMAIN="localhost"
     if [ -f /root/naiveproxy.env ]; then
         source /root/naiveproxy.env
     fi
     
     ./setup_wizard -m non-interactive -a 0.0.0.0:8443 -c admin:adminpass -n $DOMAIN --cert-type self-signed --lib-settings vpn.toml --hosts-settings hosts.toml || true
-    
+  fi
+fi
+
+if [ -d /opt/trusttunnel ]; then
+    touch /opt/trusttunnel/credentials.toml
     cat <<EOF > /etc/systemd/system/trusttunnel.service
 [Unit]
 Description=TrustTunnel Endpoint Service
@@ -43,7 +46,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/trusttunnel
-ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml
+ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml /opt/trusttunnel/credentials.toml
 Restart=always
 RestartSec=5
 
@@ -52,7 +55,12 @@ WantedBy=multi-user.target
 EOF
     systemctl daemon-reload
     systemctl enable --now trusttunnel
-  fi
+fi
+
+if command -v ufw >/dev/null 2>&1; then
+    ufw allow 443/udp >/dev/null 2>&1 || true
+    ufw allow 8443/tcp >/dev/null 2>&1 || true
+    ufw allow 8443/udp >/dev/null 2>&1 || true
 fi
 
 echo "⚙️ Обновление Backend..."

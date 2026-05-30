@@ -155,6 +155,9 @@ configure_firewall() {
   ufw allow 22/tcp >/dev/null 2>&1 || true
   ufw allow 80/tcp >/dev/null 2>&1 || true
   ufw allow 443/tcp >/dev/null 2>&1 || true
+  ufw allow 443/udp >/dev/null 2>&1 || true
+  ufw allow 8443/tcp >/dev/null 2>&1 || true
+  ufw allow 8443/udp >/dev/null 2>&1 || true
 
   ufw --force enable >/dev/null 2>&1 || true
 
@@ -494,6 +497,8 @@ install_trusttunnel() {
     
     ./setup_wizard -m non-interactive -a 0.0.0.0:8443 -c admin:adminpass -n $DOMAIN --cert-type self-signed --lib-settings vpn.toml --hosts-settings hosts.toml || true
     
+    touch /opt/trusttunnel/credentials.toml
+    
     cat <<EOF > /etc/systemd/system/trusttunnel.service
 [Unit]
 Description=TrustTunnel Endpoint Service
@@ -502,7 +507,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/trusttunnel
-ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml
+ExecStart=/opt/trusttunnel/trusttunnel_endpoint /opt/trusttunnel/vpn.toml /opt/trusttunnel/hosts.toml /opt/trusttunnel/credentials.toml
 Restart=always
 RestartSec=5
 
