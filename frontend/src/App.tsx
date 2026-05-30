@@ -20,7 +20,8 @@ import {
   ArrowDownAZ,
   ArrowUpZA,
   Filter,
-  Hash
+  Hash,
+  RefreshCw
 } from "lucide-react";
 
 type Lang = "ru" | "eu";
@@ -53,6 +54,8 @@ const dict = {
     sortDesc: "Я-А",
     sortStatus: "По статусу",
     sortId: "По номеру",
+    updateBtn: "Обновить",
+    updateStarted: "Обновление запущено, страница перезагрузится через 15 секунд...",
     error: "Произошла ошибка"
   },
   eu: {
@@ -81,6 +84,8 @@ const dict = {
     sortDesc: "Z-A",
     sortStatus: "By Status",
     sortId: "By ID",
+    updateBtn: "Update",
+    updateStarted: "Update started, page will reload in 15 seconds...",
     error: "An error occurred"
   },
 };
@@ -113,6 +118,7 @@ export default function App() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [sortType, setSortType] = useState<SortType>("id");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { toasts, push } = useToast();
 
@@ -306,9 +312,19 @@ export default function App() {
         {/* Header */}
         <header className="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/30 backdrop-blur-md z-10">
           <h2 className="text-xl font-semibold">{t.dashboard}</h2>
-          <button className="btn ghost border border-slate-800 text-xs px-3 py-1.5" onClick={switchLang}>
-            {t.lang}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-medium rounded-lg transition-all border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{t.updateBtn}</span>
+            </button>
+            <button className="btn ghost border border-slate-800 text-xs px-3 py-1.5" onClick={switchLang}>
+              {t.lang}
+            </button>
+          </div>
         </header>
 
         {/* Content Area */}
@@ -340,7 +356,7 @@ export default function App() {
           {/* Users Section */}
           <div className="space-y-6">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex items-center gap-4 w-full lg:w-auto">
+              <div className="flex items-center gap-4 mt-4 lg:mt-0">
                 <input
                   className="input flex-1 lg:w-64 bg-slate-900"
                   value={prefix}

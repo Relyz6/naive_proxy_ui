@@ -18,6 +18,9 @@ from schemas import (
     LinkResponse,
     SystemStatusResponse
 )
+import subprocess
+import threading
+from pathlib import Path
 from utils import (
     add_user_to_file,
     enrich_user,
@@ -284,4 +287,24 @@ def system_reload(_: str = Depends(check_auth)):
         return {"status": "ok", "message": "Proxy reloaded successfully"}
     else:
         raise HTTPException(status_code=500, detail="Failed to reload proxy")
+
+@router.post("/system/update", response_model=GenericResponse, summary="Update the panel", tags=["System"])
+def system_update(_: str = Depends(check_auth)):
+    """
+    Triggers the update.sh script to pull the latest code from GitHub and restart the server.
+    """
+    script_path = Path(__file__).parent.parent / "scripts" / "update.sh"
+    
+    if not script_path.exists():
+        raise HTTPException(status_code=404, detail="Update script not found")
+        
+    def run_update():
+        import time
+        time.sleep(2)  # Wait for the HTTP response to be sent
+        subprocess.Popen(["/bin/bash", str(script_path)])
+
+    thread = threading.Thread(target=run_update)
+    thread.start()
+    
+    return {"status": "ok", "message": "Update started, panel will reload shortly"}
 

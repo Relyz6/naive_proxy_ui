@@ -22,5 +22,9 @@ export const userService = {
   async getUserLink(id: string): Promise<string> {
     const res = await api.get(`/users/${id}/link`);
     return res.data.link;
+  },
+
+  async updateSystem() {
+    await api.post(`/system/update`);
   }
 };
