@@ -20,6 +20,13 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return credentials.username
 
+from utils import parse_users
+from trusttunnel import sync_tt_credentials
+
+@app.on_event("startup")
+async def startup_event():
+    sync_tt_credentials(parse_users())
+
 app = FastAPI(
     root_path="/api",
     title="Naive Panel API",
