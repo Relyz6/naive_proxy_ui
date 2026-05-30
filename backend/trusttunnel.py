@@ -126,7 +126,7 @@ def sync_tt_credentials(users: list):
         
         # Trigger restart
         import subprocess
-        subprocess.Popen(["systemctl", "reload", "trusttunnel"])
+        subprocess.Popen(["systemctl", "restart", "trusttunnel"])
         return True
     except Exception as e:
         logging.error(f"Failed to sync TT credentials: {e}")
