@@ -23,10 +23,6 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
 from utils import parse_users
 from trusttunnel import sync_tt_credentials
 
-@app.on_event("startup")
-async def startup_event():
-    sync_tt_credentials(parse_users())
-
 app = FastAPI(
     root_path="/api",
     title="Naive Panel API",
@@ -36,6 +32,10 @@ app = FastAPI(
     redoc_url=None,
     openapi_url=None
 )
+
+@app.on_event("startup")
+async def startup_event():
+    sync_tt_credentials(parse_users())
 
 app.add_middleware(
     CORSMiddleware,
