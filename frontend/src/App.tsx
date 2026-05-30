@@ -237,6 +237,9 @@ export default function App() {
 
   const maskLink = (link?: string) => {
     if (!link) return "";
+    if (link.startsWith("tt://")) {
+      return "tt://?***";
+    }
     try {
       const cleaned = link.replace("naive+", "");
       const url = new URL(cleaned);
