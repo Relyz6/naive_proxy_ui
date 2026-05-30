@@ -16,7 +16,8 @@ from schemas import (
     GenericResponse,
     DeleteUserResponse,
     LinkResponse,
-    SystemStatusResponse
+    SystemStatusResponse,
+    ChangePasswordRequest
 )
 import subprocess
 import threading
@@ -307,4 +308,32 @@ def system_update(_: str = Depends(check_auth)):
     thread.start()
     
     return {"status": "ok", "message": "Update started, panel will reload shortly"}
+
+@router.post("/system/password", response_model=GenericResponse, summary="Change admin password", tags=["System"])
+def change_admin_password(request: ChangePasswordRequest, _: str = Depends(check_auth)):
+    import re
+    
+    env_file = Path("/root/naiveproxy.env")
+    if not env_file.exists():
+        env_file = Path(__file__).parent / ".env"
+        
+    if not env_file.exists():
+        raise HTTPException(status_code=500, detail="Environment file not found")
+        
+    try:
+        content = env_file.read_text()
+        new_content = re.sub(r'ADMIN_PASSWORD=.*', f'ADMIN_PASSWORD={request.new_password}', content)
+        env_file.write_text(new_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update password: {str(e)}")
+        
+    def run_restart():
+        import time
+        time.sleep(2)
+        subprocess.Popen(["systemctl", "restart", "naiveproxy-backend"])
+        
+    thread = threading.Thread(target=run_restart)
+    thread.start()
+    
+    return {"status": "ok", "message": "Password changed successfully. Server is restarting."}
 

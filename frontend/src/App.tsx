@@ -21,7 +21,9 @@ import {
   ArrowUpZA,
   Filter,
   Hash,
-  RefreshCw
+  RefreshCw,
+  Settings,
+  X
 } from "lucide-react";
 
 type Lang = "ru" | "eu";
@@ -56,6 +58,10 @@ const dict = {
     sortId: "По номеру",
     updateBtn: "Обновить",
     updateStarted: "Обновление запущено, страница перезагрузится через 15 секунд...",
+    settingsTitle: "Настройки панели",
+    newPassword: "Новый пароль",
+    changePasswordBtn: "Изменить пароль",
+    passwordChanged: "Пароль изменён! Выполняется выход...",
     error: "Произошла ошибка"
   },
   eu: {
@@ -86,6 +92,10 @@ const dict = {
     sortId: "By ID",
     updateBtn: "Update",
     updateStarted: "Update started, page will reload in 15 seconds...",
+    settingsTitle: "Panel Settings",
+    newPassword: "New Password",
+    changePasswordBtn: "Change Password",
+    passwordChanged: "Password changed! Logging out...",
     error: "An error occurred"
   },
 };
@@ -119,6 +129,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortType, setSortType] = useState<SortType>("id");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const { toasts, push } = useToast();
 
@@ -239,6 +252,23 @@ export default function App() {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!newAdminPassword) return;
+    try {
+      setIsChangingPassword(true);
+      await userService.changePassword(newAdminPassword);
+      push(t.passwordChanged, "success");
+      setIsSettingsOpen(false);
+      setNewAdminPassword("");
+      setTimeout(() => {
+        logout();
+      }, 1500);
+    } catch {
+      push(t.error, "error");
+      setIsChangingPassword(false);
+    }
+  };
+
   const processedUsers = useMemo(() => {
     let result = [...users];
 
@@ -331,9 +361,16 @@ export default function App() {
               onClick={handleUpdate}
               disabled={isUpdating}
               className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-medium rounded-lg transition-all border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              title={t.updateBtn}
             >
               <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">{t.updateBtn}</span>
+            </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
             </button>
             <button className="btn ghost border border-slate-800 text-xs px-3 py-1.5" onClick={switchLang}>
               {t.lang}
@@ -480,7 +517,46 @@ export default function App() {
         </div>
       </main>
 
-      {/* Toasts */}
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl animate-fade-in">
+            <div className="flex items-center justify-between p-6 border-b border-slate-800">
+              <h3 className="text-xl font-semibold text-white">{t.settingsTitle}</h3>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">{t.newPassword}</label>
+                <input
+                  type="password"
+                  className="input w-full bg-slate-950"
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-800 flex justify-end">
+              <button
+                onClick={handleChangePassword}
+                disabled={isChangingPassword || !newAdminPassword}
+                className="btn primary"
+              >
+                {isChangingPassword ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Settings className="w-4 h-4" />}
+                {t.changePasswordBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
         {toasts.map((t) => (
           <div key={t.id} className="panel px-4 py-3 text-sm flex items-center gap-3 animate-fade-in border-l-4" style={{borderLeftColor: t.type === 'error' ? '#ef4444' : '#6366f1'}}>

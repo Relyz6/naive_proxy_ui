@@ -26,5 +26,9 @@ export const userService = {
 
   async updateSystem() {
     await api.post(`/system/update`);
+  },
+
+  async changePassword(new_password: string) {
+    await api.post(`/system/password`, { new_password });
   }
 };

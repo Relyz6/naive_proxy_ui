@@ -49,3 +49,6 @@ class LinkResponse(BaseModel):
 class SystemStatusResponse(BaseModel):
     caddy_running: bool
     config_valid: bool
+
+class ChangePasswordRequest(BaseModel):
+    new_password: str
