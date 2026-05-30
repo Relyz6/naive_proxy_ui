@@ -21,7 +21,7 @@ def enrich_user(user: dict) -> dict:
 
     return {
         **user,
-        "link": f"naive+https://{quote(login)}:{quote(password)}@{config.DOMAIN}",
+        "link": f"naive+quic://{quote(login)}:{quote(password)}@{config.DOMAIN}",
         "tt_link": tt_link,
     }
 

@@ -248,7 +248,7 @@ export default function App() {
       if (hostParts.length >= 2) {
         maskedHost = `${hostParts[0]}.***`;
       }
-      return `naive+https://***@${maskedHost}${url.port ? `:${url.port}` : ""}`;
+      return `naive+${url.protocol}//***@${maskedHost}${url.port ? `:${url.port}` : ""}`;
     } catch {
       return "hidden";
     }
